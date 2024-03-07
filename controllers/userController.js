@@ -2,6 +2,7 @@ const { response } = require("express")
 const { generateToken } = require("../config/jwtToken")
 const User = require("../models/userModel")
 const asyncHandler = require('express-async-handler')
+const { validMongoDbId } = require("../utils/validateMongoDbId")
 
 const createUser = asyncHandler(async (req, res) => {
     const { email } = req.body
@@ -40,6 +41,7 @@ const getAllUser = asyncHandler(async(req, res) => {
 // get single users
 const getUser = asyncHandler(async(req, res) => {
     const {id} = req.params;
+    validMongoDbId(id)
     try{
         const getUser = await User.findById(id);
         return res.json({getUser: getUser});
@@ -49,10 +51,11 @@ const getUser = asyncHandler(async(req, res) => {
 })
 
 const updateUser = asyncHandler(async (req, res) => {
-    const {id} = req.params
+    const {_id} = req.user
+    validMongoDbId(_id)
     try{
         const updateUser = await User.findByIdAndUpdate(
-            id,
+            _id,
             {
                 ...req.body
             },{new: true})
@@ -65,6 +68,7 @@ const updateUser = asyncHandler(async (req, res) => {
 // get delete users
 const deleteUser = asyncHandler(async(req, res) => {
     const {id} = req.params;
+    validMongoDbId(id)
     try{
         const deleteUser = await User.findByIdAndDelete(id);
         return res.json({deleteUser: deleteUser});
@@ -73,6 +77,26 @@ const deleteUser = asyncHandler(async(req, res) => {
     }
 })
 
+const blockUser = asyncHandler(async (req, res) =>{
+    const {id} = req.params
+    validMongoDbId(id)
+    try{
+        const user = await User.findByIdAndUpdate(id,{isBlocked: true},{new: true})
+        return res.json({message: "user is Blocked"})
+    }catch(err){
+        throw new Error(err)
+    }
+})
+const unBlockUser = asyncHandler(async (req, res) =>{
+    const {id} = req.params
+    validMongoDbId(id)
+    try{
+        const user = await User.findByIdAndUpdate(id,{isBlocked: false},{new: true})
+        return res.json({message: "user is unBlocked"})
+    }catch(err){
+        throw new Error(err)
+    }
+})
 
 module.exports = {
     createUser,
@@ -80,5 +104,7 @@ module.exports = {
     getAllUser,
     getUser,
     deleteUser,
-    updateUser
+    updateUser,
+    blockUser,
+    unBlockUser
 }
