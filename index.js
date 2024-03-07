@@ -2,12 +2,16 @@ const express = require('express');
 const dbConnect = require('./config/dbConnect');
 const dotenv = require('dotenv').config()
 const bodyparser = require('body-parser')
+const cookieParser = require('cookie-parser')
+
+
 const app = express()
 const PORT = process.env.PORT || 4000;
 const authRouter = require('./routes/authRoute');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 dbConnect();
 
+app.use(cookieParser())
 app.use(bodyparser.json())
 app.use(bodyparser.urlencoded({extended: false}))
 app.use("/api/user", authRouter)
