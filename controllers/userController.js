@@ -5,6 +5,7 @@ const asyncHandler = require('express-async-handler')
 const { validMongoDbId } = require("../utils/validateMongoDbId")
 const { generateRefreshToken } = require("../config/refreshToken")
 const jwt = require("jsonwebtoken")
+const crypto = require("crypto");
 const { sendEmail } = require("./emailController")
 
 const createUser = asyncHandler(async (req, res) => {
@@ -187,6 +188,23 @@ const forgotPasswordToken = asyncHandler(async(req, res) => {
     }
 })
 
+const resetPassword = asyncHandler(async (req, res) =>{
+    const {password} = req.body
+    const {token} = req.params
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: {$gt: Date.now()}
+    })
+    console.log({password,token, user, hashedToken})
+    if(!user) throw new Error("Token Expired, Please try again later")
+    user.password = password
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined
+    await user.save();
+    res.json(user) 
+})
+
 module.exports = {
     createUser,
     loginUser,
@@ -199,5 +217,6 @@ module.exports = {
     handleRefreshToken,
     logout,
     updatePassword,
-    forgotPasswordToken
+    forgotPasswordToken,
+    resetPassword
 }
